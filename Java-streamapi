@@ -1,0 +1,94 @@
+Lambda Expressions: (Anonymous Functions in Action) It has no name, no return type written explicitly, and no access modifier. The compiler infers everything from context. Before Java 8 for instance class declaration ,implements Comparator, compare() method, @Override, object creation but actual logic is one line Integer.compare(e1.getAge(), e2.getAge())  everything else is boilerplate. Java later allowed anonymous classes.
+Functional Interface: which enforces that the interface must have exactly one abstract method. Can have default, static and private Predicate: A Predicate is a functional interface that takes one argument and returns a boolean. It represents a condition.
+Function: Transforming Data: transformation from one value to another.
+Consumer: Performing Actions Without Returning Anything. which iterates over a list and prints each element. This shows that Consumers are often used for side effects, such as logging or printing.
+Supplier: A Supplier does the opposite of a Consumer. It produces a value without taking any input. Suppliers are commonly used for lazy initialization, default values, and infinite streams.
+BiPredicate,BiConsumer,andBiFunction: Sometimes operations require two inputs
+UnaryOperatorandBinaryOperator(Specialized Functions): where input and output types are the same.
+Method References: Cleaner Lambdas: Method references improve readability when a lambda simply calls an existing method.
+Q: When can a lambda be replaced with a method reference?
+
+Answer: A lambda can be replaced with a method reference only if its entire body consists of calling one existing method (or constructor) with the same arguments it receives, without any additional computation, transformation, or conditional logic.
+Constructor Reference: Creating Objects in Streams
+Stream: Stream is a sequence of elements that supports functional and declarative data processing. A stream does not store data and it does not modify the original collection. Instead, it takes data from a source (like a List or an Array), processes it step by step using functional operations, and produces a result.
+Functional → How you express the operations (using functions).Declarative → How you describe the problem (what you want, not how).
+Every Stream follows a three-step pipeline model.
+First, a source creates the stream. Second, one or more intermediate operations transform the data. Finally, a terminal operation triggers execution and produces a result. Without a terminal operation, nothing happens.
+Intermediate Operations in Java Streams:  Streams, intermediate operations are operations that take a stream as input and return another stream as output. They do not produce a final result by themselves. Instead, they build a processing pipeline. The most important thing to understand is that intermediate operations are lazy. This means they do not execute when they are defined. They execute only when a terminal operation such as count(), forEach(), or collect() is invoked.
+	1. filter() 
+	2. map(): Transforming Each Element in the Stream and always preserves the number of elements; it only changes their form.
+	3. sorted(): Ordering Stream Elements
+	4. distinct(): Removing Duplicates Based on equals()
+	5. limit(): Restricting the Size of an Infinite Stream
+	6. skip(): Ignoring Initial Elements
+	7. peek(): Observing Elements Without Modifying Them
+	8. flatMap(): Flattening Nested Structures. It is used when each element of a stream is itself a collection or stream.
+Terminal Operations: terminal operations are the operations that end the stream pipeline. Unlike intermediate operations, terminal operations actually trigger execution of the stream. Until a terminal operation is called, the stream does nothing—no filtering, no mapping, no sorting.
+Once a terminal operation executes, the stream is considered consumed and closed. This is why a stream cannot be reused after a terminal operation. Your TerminalOps class is a textbook demonstration of this concept. 
+	1. collect(): Converting a Stream Back into Data
+	2. forEach(): Consuming Elements with Side Effects
+	3. reduce(): Combining Elements into a Single Result. reduce() returns an Optional because the stream might be empty.
+	4. count(): Counting Elements in a Stream
+	5. findFirst() and findAny(): Retrieving Elements from a Stream. Both return Optional because the stream might be empty. especially useful in parallel streams.
+	6. toArray(): Converting a Stream into an Array. The default version returns Object[], but typed versions can be used for specific array types.
+	7. min() and max(): Finding Extreme Values. These operations return the maximum or minimum element based on a comparator. Both return Optional because the stream could be empty.
+	8. forEach vs forEachOrdered in Parallel Streams
+Parallel Stream (At Its Core): A parallel stream is a special type of Java Stream that allows elements to be processed concurrently using multiple threads. Instead of processing elements one by one on a single thread (sequential stream), Java divides the workload into chunks and executes them in parallel using the ForkJoinPool.
+How Parallel Streams Work Internally (Important Concept)
+Internally, parallel streams use Java’s ForkJoinPool.commonPool(). The stream:
+
+	• Splits the source data into chunks
+	• Assigns chunks to worker threads
+	• Executes operations in parallel
+	• Merges the results back together
+You never see threads explicitly, but they are absolutely there. This abstraction is powerful but dangerous if misunderstood.
+
+Stateless vs Stateful Operations (Interview Gold): Your factorial example is stateless. Your cumulative sum example is stateful.
+Parallel streams must never use stateful lambdas. This is one of the most important rules of Streams and is frequently tested in interviews.
+If an operation depends on:
+Previous elements
+Shared variables
+Execution order
+it is not safe for parallel streams
+
+What Is Collectors and Why It Exists: In Java Streams, intermediate operations transform data, but eventually we need to materialize the result into something useful such as a List, Set, Map, or a computed value. This is where the Collectors utility class comes in.
+Collectors is a factory class that provides ready-made implementations of the Collector interface. A Collector defines how stream elements are accumulated, combined, and finalized. Instead of manually writing accumulation logic, Java gives us reusable collectors that cover most real-world needs.
+In simple terms, Streams process data, Collectors decide the final shape of the result.
+
+Primitive Streams Exist in Java:  When Java 8 introduced Streams, the first version worked with objects (Stream<T>). However, Java collections often deal with primitive data like int, double, and long. If primitive values were used directly with Stream<T>, Java would need to box them into wrapper objects (Integer, Double, Long), which creates extra objects and slows down performance.
+To solve this, Java introduced primitive stream specializations:
+	1. IntStream for int
+	2. LongStream for long
+	3. DoubleStream for double
+	
+These streams work directly with primitives, avoiding boxing and unboxing, making them faster and more memory-efficient, especially for numeric computations.
+What “Stateless” Means in Java Streams:
+In Java Streams, an operation is called stateless when each element is processed independently, without relying on or modifying any shared data. The lambda expression receives an element, performs its logic, and finishes—without remembering anything about previous elements.
+
+Stateless operations are the foundation of Streams. They are predictable, safe, easy to reason about, and—most importantly—safe for parallel streams.
+
+When Java processes a stateless stream, it can freely split elements across threads, reorder execution, and merge results without affecting correctness.
+
+What “Stateful” Means in Java Streams:
+An operation becomes stateful when it depends on or modifies shared state outside the stream pipeline. This means the result of processing one element may depend on previous elements or on a shared variable.
+Statefulness breaks the core assumption Streams rely on: independent element processing.
+Stateful operations are dangerous, especially in parallel streams, because Java does not guarantee execution order.
+
+Thread-Safe ≠ Stream-Safe (Interview Gold):
+A critical rule to remember is:
+Thread-safe does NOT mean stream-safe
+Atomic variables, synchronized blocks, and locks may prevent crashes, but they do not restore order guarantees in parallel streams.
+Parallel streams assume stateless, side-effect-free lambdas. Violating this assumption leads to subtle, hard-to-debug bugs.
+
+Are All Stateful Operations Illegal?
+Not all stateful behavior is forbidden, but it must be controlled and intentional.
+Some built-in stream operations like distinct(), sorted(), and limit() are stateful internally, but they are implemented by the Stream framework itself in a safe way.
+What is dangerous is user-defined stateful lambdas.
+
+How to Fix Stateful Logic the Right Way
+Instead of using shared state, restructure the problem using stateless operations.
+For example, instead of cumulative sum with shared state, you would:
+Use a loop (when order matters)
+Or use specialized collectors
+Or avoid parallel streams entirely
+Streams are not meant to replace every loop—only the ones that fit the functional model.
