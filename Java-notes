@@ -1,0 +1,38 @@
+Generics: Generics allow a class, interface, or method to work with different data types while maintaining compile-time type safety.
+Why Java introduced Generics?
+Before Java 5
+Collection<Object>
+Everything stored as Object.
+Problems
+	1. Manual casting 
+	2. Runtime Exceptions 
+	3. Difficult maintenance 
+Generics solved all these.
+
+T → Type
+E → Element
+K → Key
+V → Value
+N → Number
+R → Return Type
+Q1. Why Generics?
+	• Type safety 
+	• No casting 
+	• Reusable code 
+	• Compile-time checking 
+Q2. Difference between T and ?
+	• T is a named type parameter that lets you declare relationships between parameters and return types. 
+	• ? is an unknown type used mainly when consuming existing generic types (for example, List<?>). 
+Q3. What is PECS?
+	• Producer Extends (? extends T) → read values. 
+	• Consumer Super (? super T) → write values. 
+Q4. What is Type Erasure?
+The compiler removes generic type information during compilation. At runtime, List<String> and List<Integer> are both just List.
+
+Summary
+	• String extends Object, so a String can be assigned to an Object variable.
+	• List<String> does not extend List<Object> because that would allow inserting non-String objects into a list that is supposed to contain only Strings.
+	• Java Generics are invariant to guarantee compile-time type safety.
+	• Wildcards (?) let you write methods that can accept lists of any element type without sacrificing that safety.
+	• List<?> is ideal when you only need to read from a list, not modify it.
+
